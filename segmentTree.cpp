@@ -1,6 +1,8 @@
 #include<bits/stdc++.h>
 using namespace std;
 #define debug(x)        cout<<#x<<" :"<<x<<endl;
+#define debug2(x,y)     cout<<#x<<" :"<<x << " "<<#y<<" :"<<y <<endl;
+#define debug3(x,y,z)   cout<<#x<<" :"<<x<<" "<<#y<<" :"<<y<< " "<<#z<<" :"<<z <<endl;
 #define ff              first
 #define ss              second
 #define ar              array
@@ -79,61 +81,113 @@ int power( int x,  int y, int p)
 	return res;
 }
 
-int n;
-bool isBi = true;
-void isBipartite(vector<vector<int>> &adj, int s, int c, vector<int> &col, vector<int> &vis)
-{
-	vis[s]++;
+int N = 1e6 + 2;
+vector<int> tree(4 * N);
+vector<int> a(N);
 
-	for (int node : adj[s])
+
+void build(int node, int s, int e)
+{
+	if (s > e)
 	{
-		if (!vis[node])
-		{
-			isBipartite(adj, node, c ^ 1, col, vis);
-		}
-		else
-		{
-			if (col[node] != c ^ 1)
-			{
-				isBi = false;
-				return;
-			}
-		}
+		return;
 	}
+
+	if (s == e)
+	{
+		tree[node] = 1;
+		return;
+	}
+
+	int mid = (s + e) / 2;
+	build(2 * node, s, mid);
+	build(2 * node + 1, mid + 1, e);
+
+	tree[node] = tree[2 * node] + tree[2 * node + 1];
 }
 
-void colorGraph(vector<vector<int>> &adj, int s, int c, vector<int> &col, vector<int> &vis)
+void update1(int node, int s, int e, int x)
 {
-	vis[s]++;
-	col[s] = c;
-
-	for (int node : adj[s])
+	if (s > e)
 	{
-		if (!vis[node])
-		{
-			colorGraph(adj, node, c ^ 1, col, vis);
-		}
+		return;
+	}
+
+	if (s == e)
+	{
+		tree[node] = 0;
+		return;
+	}
+
+	int mid = (s + e) / 2;
+	if (x >= s && x <= mid)
+		update1(2 * node, s, mid, x);
+	else
+		update1(2 * node + 1, mid + 1, e, x);
+
+	tree[node] = tree[2 * node] + tree[2 * node + 1];
+}
+
+int query(int node, int s, int e, int k, int n)
+{
+	if (s < 1 || e > n)
+	{
+		return 0;
+	}
+
+	if (s == e && k == 1)
+	{
+		return s;
+	}
+
+	int mid = (s + e) / 2;
+
+	if (k > tree[2 * node])
+	{
+		return query(2 * node + 1, mid + 1, e, k - tree[2 * node], n);
+	}
+	else
+	{
+		return query(2 * node, s, mid, k, n);
 	}
 }
 
 
 void solve()
 {
-	isBi = true;
+	int n;
 	cin >> n;
-	vector<vector<int>> adj(n + 1);
-	vector<int> col(n + 1, -1);
-	vector<int> vis(n + 1);
-	vector<int> deg(n + 1, 0);
-	f(i, n)
+
+	for (int i = 1; i <= n; i++)
 	{
-		int x, y;
-		cin >> x >> y;
-		adj[x].pb(y);
-		adj[y].pb(x);
+		a[i] = 1;
 	}
 
-	colorGraph(adj, 1LL, 0LL, col, vis);
+	int q;
+	cin >> q;
+
+	build(1, 1, n);
+
+	while (q--)
+	{
+		int type;
+		cin >> type;
+
+		if (type == 0)
+		{
+			int x;
+			cin >> x;
+			update1(1, 1, n, x);
+		}
+		else
+		{
+			int k;
+			cin >> k;
+			cout << query(1, 1, n, k, n) << endl;
+		}
+
+	}
+
 }
 int32_t main()
 {
